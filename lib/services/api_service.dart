@@ -13,7 +13,7 @@ class ApiService {
     };
   }
 
-  // Send OTP (supports both driver and parent)
+  // Send OTP 
   static Future<Map<String, dynamic>> sendOTP(
     String phoneNumber,
     String userType,
@@ -23,11 +23,6 @@ class ApiService {
         : AppConfig.sendParentOtpEndpoint;
 
     final fullUrl = '${AppConfig.baseUrl}$endpoint';
-
-    print('Phone: +91$phoneNumber');
-    print('User Type: $userType');
-    print('Attempting to connect to: $fullUrl');
-    print('Platform: ${AppConfig.configInfo}');
 
     try {
       final response = await http
@@ -45,27 +40,18 @@ class ApiService {
             },
           );
 
-      print(' Response received!');
-
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        print('OTP request successful!');
         return responseData;
       } else {
-        print('Server returned error: ${response.statusCode}');
         throw Exception(
           'Server error: ${response.statusCode} - ${response.body}',
         );
       }
     } catch (e) {
-      print('Network Error Details: $e');
       if (e.toString().contains('timeout')) {
         throw Exception(
-          'Connection timeout - Check if server is running and accessible',
-        );
-      } else if (e.toString().contains('connection refused')) {
-        throw Exception(
-          'Connection refused - Server may be down or wrong IP address',
+          'Connection timeout error',
         );
       } else {
         throw Exception('Network error: $e');
@@ -73,7 +59,7 @@ class ApiService {
     }
   }
 
-  // Verify OTP (supports both driver and parent)
+  // Verify OTP 
   static Future<Map<String, dynamic>> verifyOTP(
     String otpToken,
     String otp,
@@ -84,21 +70,18 @@ class ApiService {
           ? AppConfig.verifyDriverOtpEndpoint
           : AppConfig.verifyParentOtpEndpoint;
 
+      final fullUrl = '${AppConfig.baseUrl}$endpoint';
+
       final response = await http.post(
-        Uri.parse('${AppConfig.baseUrl}$endpoint'),
+        Uri.parse(fullUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'otpToken': otpToken, 'otp': otp}),
       );
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        print('Verify OTP Response Status: ${response.statusCode}');
-        print('Verify OTP Response Body: ${response.body}');
-        print('Verify OTP Response Data: $responseData');
         return responseData;
       } else {
-        print('Verify OTP Error Status: ${response.statusCode}');
-        print('Verify OTP Error Body: ${response.body}');
         throw Exception('Failed to verify OTP: ${response.statusCode}');
       }
     } catch (e) {
@@ -117,11 +100,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        print('Driver Route Response: $responseData');
         return responseData;
       } else {
-        print('Driver Route Error Status: ${response.statusCode}');
-        print('Driver Route Error Body: ${response.body}');
         throw Exception('Failed to get driver route: ${response.statusCode}');
       }
     } catch (e) {
@@ -140,11 +120,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        print('Driver Profile Response: $responseData');
         return responseData;
       } else {
-        print('Driver Profile Error Status: ${response.statusCode}');
-        print('Driver Profile Error Body: ${response.body}');
         throw Exception('Failed to get driver profile: ${response.statusCode}');
       }
     } catch (e) {

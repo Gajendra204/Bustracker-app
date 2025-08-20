@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../repositories/auth_repository.dart';
+import '../repositories/parent_auth_repository.dart';
 import '../services/token_service.dart';
 import 'route_details_screen.dart';
+import 'parent_home_screen.dart';
 import 'mobile_number_screen.dart';
 
 class OTPScreen extends StatefulWidget {
@@ -46,8 +48,15 @@ class _OTPScreenState extends State<OTPScreen> {
         throw Exception('OTP token not found. Please try sending OTP again.');
       }
 
-      final authRepository = AuthRepository();
-      final result = await authRepository.verifyOtp(otp);
+      // Use appropriate repository based on user type
+      dynamic result;
+      if (widget.userType == 'parent') {
+        final parentAuthRepository = ParentAuthRepository();
+        result = await parentAuthRepository.verifyOtp(otp);
+      } else {
+        final authRepository = AuthRepository();
+        result = await authRepository.verifyOtp(otp);
+      }
 
       if (!result.success) {
         setState(() {
@@ -62,34 +71,39 @@ class _OTPScreenState extends State<OTPScreen> {
       });
 
       if (mounted) {
-        final userRole = await TokenService.getDriverRole();
+        final userRole = await TokenService.getUserRole();
 
-        if (userRole?.toLowerCase() == 'driver') {
+        if (widget.userType == 'parent' &&
+            userRole?.toLowerCase() == 'parent') {
           _showSnackBar('Login successful!', isError: false);
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const RouteDetailsScreen(),
-              ),
-            );
-          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ParentHomeScreen()),
+          );
+        } else if (widget.userType == 'driver' &&
+            userRole?.toLowerCase() == 'driver') {
+          _showSnackBar('Login successful!', isError: false);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const RouteDetailsScreen()),
+          );
         } else {
-          print('Non-driver role detected: $userRole. Redirecting to login.');
+          // Role mismatch - clear tokens and redirect to login
+          print(
+            'Role mismatch detected: Expected ${widget.userType}, got $userRole',
+          );
           await TokenService.clearAllTokens();
-          if (mounted) {
-            _showSnackBar(
-              'This app is for drivers only.',
-              isError: true,
-            );
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    const MobileNumberScreen(userType: 'driver'),
-              ),
-            );
-          }
+          _showSnackBar(
+            'Authentication failed. Please try again.',
+            isError: true,
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  MobileNumberScreen(userType: widget.userType),
+            ),
+          );
         }
       }
     } catch (e) {
@@ -237,40 +251,6 @@ class _OTPScreenState extends State<OTPScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
-
-            // Resend OTP
-            Center(
-              child: TextButton(
-                onPressed: () async {
-                  try {
-                    final authRepository = AuthRepository();
-                    final result = await authRepository.sendOtp(
-                      widget.phoneNumber,
-                      widget.userType,
-                    );
-
-                    if (result.success) {
-                      print('Resend OTP: Success');
-                    } else {
-                      print('Resend OTP: Failed - ${result.message}');
-                    }
-                    _showSnackBar('OTP sent successfully!', isError: false);
-                  } catch (e) {
-                    _showSnackBar('Failed to resend OTP: ${e.toString()}');
-                  }
-                },
-                child: Text(
-                  'Resend OTP',
-                  style: TextStyle(
-                    color: widget.userType == 'driver'
-                        ? Colors.blue
-                        : Colors.green,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

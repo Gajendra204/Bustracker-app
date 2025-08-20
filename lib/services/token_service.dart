@@ -5,6 +5,7 @@ class TokenService {
   static const String _accessTokenKey = 'access_token';
   static const String _otpTokenKey = 'otp_token';
   static const String _driverRoleKey = 'driver_role';
+  static const String _userRoleKey = 'user_role';
 
   // Store access token
   static Future<void> storeAccessToken(String token) async {
@@ -105,5 +106,59 @@ class TokenService {
   static Future<void> storeDriverRole(String userRole) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_driverRoleKey, userRole);
+  }
+
+  // Store user role 
+  static Future<void> storeUserRole(String userRole) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userRoleKey, userRole);
+  }
+
+  // Get user role 
+  static Future<String?> getUserRole() async {
+    final token = await getAccessToken();
+    if (token == null) return null;
+
+    final decoded = decodeToken(token);
+    return decoded?['role'];
+  }
+
+  // Get parent ID from stored token
+  static Future<String?> getParentId() async {
+    final token = await getAccessToken();
+    if (token == null) return null;
+
+    final decoded = decodeToken(token);
+    return decoded?['userId'];
+  }
+
+  // Get student ID from parent token
+  static Future<String?> getStudentId() async {
+    final token = await getAccessToken();
+    if (token == null) return null;
+
+    final decoded = decodeToken(token);
+    return decoded?['studentId'];
+  }
+
+  // Get parent phone from stored token
+  static Future<String?> getParentPhone() async {
+    final token = await getAccessToken();
+    if (token == null) return null;
+
+    final decoded = decodeToken(token);
+    return decoded?['phone'];
+  }
+
+  // Check if current user is a parent
+  static Future<bool> isParent() async {
+    final role = await getUserRole();
+    return role?.toLowerCase() == 'parent';
+  }
+
+  // Check if current user is a driver
+  static Future<bool> isDriver() async {
+    final role = await getUserRole();
+    return role?.toLowerCase() == 'driver';
   }
 }

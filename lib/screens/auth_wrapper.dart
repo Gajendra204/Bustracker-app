@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/token_service.dart';
-import 'mobile_number_screen.dart';
 import 'route_details_screen.dart';
+import 'parent_home_screen.dart';
+import 'Home_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -26,7 +27,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     String? userRole;
 
     if (isLoggedIn) {
-      userRole = await TokenService.getDriverRole();
+      userRole = await TokenService.getUserRole();
     }
 
     setState(() {
@@ -45,12 +46,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (_isLoggedIn) {
       if (_userRole?.toLowerCase() == 'driver') {
         return const RouteDetailsScreen();
+      } else if (_userRole?.toLowerCase() == 'parent') {
+        return const ParentHomeScreen();
       } else {
+        
         TokenService.clearAllTokens();
-        return const MobileNumberScreen(userType: 'driver');
+        return const HomeScreen();
       }
     } else {
-      return const MobileNumberScreen(userType: 'driver');
+      
+      return const HomeScreen();
     }
   }
 }
