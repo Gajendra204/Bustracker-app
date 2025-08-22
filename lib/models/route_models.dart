@@ -1,4 +1,3 @@
-
 class RouteData {
   final String id;
   final String name;
@@ -127,7 +126,7 @@ class Student {
     return Student(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
-      class_: json['class']?.toString(), 
+      class_: json['class']?.toString(),
       parentName: json['parentName']?.toString(),
       parentPhone: json['parentPhone']?.toString(),
       pickupLocation: json['pickupLocation']?.toString(),

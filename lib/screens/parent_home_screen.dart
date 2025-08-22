@@ -178,7 +178,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                   subtitle: 'Live location',
                   color: Colors.blue,
                   onTap: () {
-                    _showSnackBar('Bus tracking feature coming soon!', isError: false);
+                    _showSnackBar('Bus tracking ', isError: false);
                   },
                 ),
     
@@ -188,7 +188,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                   subtitle: 'Manage account',
                   color: Colors.teal,
                   onTap: () {
-                    _showSnackBar('Profile feature coming soon!', isError: false);
+                    _showSnackBar('Profile ', isError: false);
                   },
                 ),
               ],

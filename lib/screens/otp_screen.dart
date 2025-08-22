@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
 import '../repositories/auth_repository.dart';
 import '../repositories/parent_auth_repository.dart';
 import '../services/token_service.dart';
@@ -48,6 +49,32 @@ class _OTPScreenState extends State<OTPScreen> {
         throw Exception('OTP token not found. Please try sending OTP again.');
       }
 
+      // Decode and validate token type
+      final tokenParts = otpToken.split('.');
+      if (tokenParts.length == 3) {
+        final payload = tokenParts[1];
+        final decoded = utf8.decode(
+          base64Url.decode(base64Url.normalize(payload)),
+        );
+        final tokenData = jsonDecode(decoded);
+        final tokenType = tokenData['type'] as String?;
+
+        print('Token type: $tokenType, Expected user type: ${widget.userType}');
+
+        // Check if token type matches expected user type
+        if ((widget.userType == 'driver' && tokenType != 'driver_otp') ||
+            (widget.userType == 'parent' && tokenType != 'parent_otp')) {
+          setState(() {
+            _isLoading = false;
+          });
+          _showSnackBar(
+            'Token type mismatch. Please go back and request a new OTP for ${widget.userType} login.',
+            isError: true,
+          );
+          return;
+        }
+      }
+
       // Use appropriate repository based on user type
       dynamic result;
       if (widget.userType == 'parent') {
@@ -88,10 +115,6 @@ class _OTPScreenState extends State<OTPScreen> {
             MaterialPageRoute(builder: (context) => const RouteDetailsScreen()),
           );
         } else {
-          // Role mismatch - clear tokens and redirect to login
-          print(
-            'Role mismatch detected: Expected ${widget.userType}, got $userRole',
-          );
           await TokenService.clearAllTokens();
           _showSnackBar(
             'Authentication failed. Please try again.',
@@ -250,7 +273,6 @@ class _OTPScreenState extends State<OTPScreen> {
                       ),
               ),
             ),
-
           ],
         ),
       ),
