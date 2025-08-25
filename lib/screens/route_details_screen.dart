@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../blocs/route/route_bloc.dart';
-import '../blocs/route/route_event.dart';
-import '../blocs/route/route_state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/route_provider.dart';
 import '../models/route_models.dart';
 import '../services/token_service.dart';
 import '../widgets/route_header_card.dart';
@@ -12,20 +10,22 @@ import '../widgets/route_actions_card.dart';
 import 'mobile_number_screen.dart';
 import 'integrated_map_screen.dart';
 
-class RouteDetailsScreen extends StatelessWidget {
+class RouteDetailsScreen extends ConsumerStatefulWidget {
   const RouteDetailsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => RouteBloc()..add(LoadRoute()),
-      child: const _RouteDetailsView(),
-    );
-  }
+  ConsumerState<RouteDetailsScreen> createState() => _RouteDetailsScreenState();
 }
 
-class _RouteDetailsView extends StatelessWidget {
-  const _RouteDetailsView();
+class _RouteDetailsScreenState extends ConsumerState<RouteDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load route when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(routeProvider.notifier).loadRoute();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,13 +34,17 @@ class _RouteDetailsView extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Route Details',
-          style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[800]),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          BlocBuilder<RouteBloc, RouteState>(
-            builder: (context, state) {
+          Consumer(
+            builder: (context, ref, child) {
+              final state = ref.watch(routeProvider);
               if (state is RouteLoaded) {
                 return IconButton(
                   icon: Icon(
@@ -49,7 +53,7 @@ class _RouteDetailsView extends StatelessWidget {
                   ),
                   onPressed: state.isGpsEnabled
                       ? null
-                      : () => context.read<RouteBloc>().add(EnableGPS()),
+                      : () => ref.read(routeProvider.notifier).enableGPS(),
                   tooltip: state.isGpsEnabled ? 'GPS Enabled' : 'Enable GPS',
                 );
               }
@@ -58,7 +62,7 @@ class _RouteDetailsView extends StatelessWidget {
           ),
           IconButton(
             icon: Icon(Icons.refresh, color: Colors.grey[800]),
-            onPressed: () => context.read<RouteBloc>().add(RefreshRoute()),
+            onPressed: () => ref.read(routeProvider.notifier).refreshRoute(),
           ),
           IconButton(
             icon: Icon(Icons.logout, color: Colors.grey[800]),
@@ -66,8 +70,10 @@ class _RouteDetailsView extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<RouteBloc, RouteState>(
-        builder: (context, state) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final state = ref.watch(routeProvider);
+
           if (state is RouteLoading) {
             return const Center(
               child: Column(
@@ -96,13 +102,14 @@ class _RouteDetailsView extends StatelessWidget {
           return const SizedBox.shrink();
         },
       ),
-      floatingActionButton: BlocBuilder<RouteBloc, RouteState>(
-        builder: (context, state) {
+      floatingActionButton: Consumer(
+        builder: (context, ref, child) {
+          final state = ref.watch(routeProvider);
           if (state is RouteLoaded && state.isGpsEnabled) {
             return FloatingActionButton.extended(
               onPressed: state.isTracking
-                  ? () => context.read<RouteBloc>().add(StopTracking())
-                  : () => context.read<RouteBloc>().add(StartTracking()),
+                  ? () => ref.read(routeProvider.notifier).stopTracking()
+                  : () => ref.read(routeProvider.notifier).startTracking(),
               icon: Icon(state.isTracking ? Icons.pause : Icons.play_arrow),
               label: Text(state.isTracking ? 'Pause Route' : 'Start Route'),
               backgroundColor: state.isTracking ? Colors.orange : Colors.green,
@@ -141,7 +148,7 @@ class _RouteDetailsView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => context.read<RouteBloc>().add(LoadRoute()),
+            onPressed: () => ref.read(routeProvider.notifier).loadRoute(),
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),
           ),
@@ -176,7 +183,7 @@ class _RouteDetailsView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => context.read<RouteBloc>().add(LoadRoute()),
+            onPressed: () => ref.read(routeProvider.notifier).loadRoute(),
             icon: const Icon(Icons.refresh),
             label: const Text('Refresh'),
           ),
@@ -205,9 +212,9 @@ class _RouteDetailsView extends StatelessWidget {
             status: state.status,
 
             onOpenMap: () => _openIntegratedMap(context, state.route),
-            onCompleteRoute: () => context.read<RouteBloc>().add(
-              const UpdateRouteStatus(RouteStatus.completed),
-            ),
+            onCompleteRoute: () => ref
+                .read(routeProvider.notifier)
+                .updateRouteStatus(RouteStatus.completed),
           ),
 
           const SizedBox(height: 16),
@@ -228,21 +235,20 @@ class _RouteDetailsView extends StatelessWidget {
         );
       }
     } catch (e) {
-       if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Logout failed. Please try again.'),
-          backgroundColor: Colors.red[400],
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Logout failed. Please try again.'),
+            backgroundColor: Colors.red[400],
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
   void _openIntegratedMap(BuildContext context, RouteData route) {
-    
     final routeDataMap = {
       'route': {
         '_id': route.id,

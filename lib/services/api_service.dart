@@ -13,7 +13,7 @@ class ApiService {
     };
   }
 
-  // Send OTP 
+  // Send OTP
   static Future<Map<String, dynamic>> sendOTP(
     String phoneNumber,
     String userType,
@@ -50,16 +50,14 @@ class ApiService {
       }
     } catch (e) {
       if (e.toString().contains('timeout')) {
-        throw Exception(
-          'Connection timeout error',
-        );
+        throw Exception('Connection timeout error');
       } else {
         throw Exception('Network error: $e');
       }
     }
   }
 
-  // Verify OTP 
+  // Verify OTP
   static Future<Map<String, dynamic>> verifyOTP(
     String otpToken,
     String otp,
@@ -126,6 +124,36 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Network error: $e');
+    }
+  }
+
+  // Get parent's child route information
+  static Future<Map<String, dynamic>> getParentRoute() async {
+    try {
+      final headers = await _getAuthHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConfig.baseUrl}/parent/route'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData;
+      } else {
+        throw Exception('Failed to get parent route: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  // Get driver ID for parent's child route
+  static Future<String?> getDriverIdForParent() async {
+    try {
+      final routeData = await getParentRoute();
+      return routeData['data']?['driverId']?.toString();
+    } catch (e) {
+      throw Exception('Failed to get driver ID: $e');
     }
   }
 }

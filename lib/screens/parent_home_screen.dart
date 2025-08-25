@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/token_service.dart';
 import '../repositories/parent_auth_repository.dart';
 import 'mobile_number_screen.dart';
+import 'parent_bus_tracking_screen.dart';
 
-// Parent Home Screen 
+// Parent Home Screen
 class ParentHomeScreen extends StatefulWidget {
   const ParentHomeScreen({super.key});
 
@@ -70,15 +71,18 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     }
   }
 
+  void _navigateToTracking() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ParentBusTrackingScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(
-            color: Colors.green,
-          ),
-        ),
+        body: Center(child: CircularProgressIndicator(color: Colors.green)),
       );
     }
 
@@ -87,10 +91,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
       appBar: AppBar(
         title: const Text(
           'Parent Dashboard',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.green,
         elevation: 0,
@@ -177,11 +178,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                   title: 'Track Bus',
                   subtitle: 'Live location',
                   color: Colors.blue,
-                  onTap: () {
-                    _showSnackBar('Bus tracking ', isError: false);
-                  },
+                  onTap: _navigateToTracking,
                 ),
-    
+
                 _buildActionCard(
                   icon: Icons.person,
                   title: 'Profile',
@@ -230,11 +229,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                size: 32,
-                color: color,
-              ),
+              child: Icon(icon, size: 32, color: color),
             ),
             const SizedBox(height: 12),
             Text(
@@ -249,10 +244,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
           ],

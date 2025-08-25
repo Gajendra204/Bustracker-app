@@ -216,6 +216,7 @@ class _IntegratedMapScreenState extends State<IntegratedMapScreen> {
                       _controller.nextStop!['location']['lng'].toDouble(),
                     )
                   : null,
+              isDriverView: true, // This is the driver view
             ),
           ),
 

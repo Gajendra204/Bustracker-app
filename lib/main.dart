@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:driver_app/config/firebase_config.dart';
-import 'package:driver_app/screens/Home_screen.dart';
+import 'package:driver_app/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -8,7 +9,7 @@ void main() async {
   // Initialize Firebase
   await FirebaseConfig.initialize();
 
-  runApp(const BusTrackerApp());
+  runApp(const ProviderScope(child: BusTrackerApp()));
 }
 
 class BusTrackerApp extends StatelessWidget {
